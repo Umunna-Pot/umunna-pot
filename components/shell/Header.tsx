@@ -1,0 +1,133 @@
+"use client"
+
+import * as React from "react"
+import { ConnectButton } from "@rainbow-me/rainbowkit"
+import {
+  AlertCircleIcon,
+  MenuIcon,
+  MoonIcon,
+  RefreshCwIcon,
+  SunIcon,
+  TrendingUpIcon,
+} from "lucide-react"
+import { useTheme } from "next-themes"
+
+import { Sidebar } from "@/components/shell/Sidebar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useRoqquRates } from "@/hooks/useRoqquRates"
+import { formatNgn } from "@/lib/format"
+
+export function Header() {
+  const { data, isLoading, isError, refetch, isFetching } = useRoqquRates()
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mobileOpen, setMobileOpen] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  return (
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/90 px-4 backdrop-blur md:px-6">
+      <div className="flex items-center gap-2.5">
+        <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
+          <DialogTrigger
+            render={
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="lg:hidden"
+                aria-label="Open navigation menu"
+              />
+            }
+          >
+            <MenuIcon className="size-4" />
+          </DialogTrigger>
+          <DialogContent className="max-w-xs p-0">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Navigation Menu</DialogTitle>
+              <DialogDescription>
+                Navigate across Umunna Pot modules
+              </DialogDescription>
+            </DialogHeader>
+            <Sidebar
+              className="w-full border-r-0"
+              onNavigate={() => setMobileOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {isLoading ? (
+          <Skeleton className="h-8 w-44 rounded-lg" />
+        ) : isError || !data ? (
+          <div className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-xs text-destructive">
+            <AlertCircleIcon className="size-3.5 shrink-0" />
+            <span>Roqqu rate offline</span>
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+            >
+              <RefreshCwIcon className="size-3" />
+              Retry
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-xs">
+            <TrendingUpIcon className="size-3.5 text-primary" />
+            <span className="font-medium text-foreground">
+              1 USDT = {formatNgn(data.ngnPerUsd)}
+            </span>
+            <Badge variant="outline" className="hidden sm:inline-flex">
+              {data.source === "ras-live"
+                ? `RAS ${data.mode}`
+                : data.source === "roqqu-public"
+                  ? "Roqqu Live"
+                  : "Fallback"}
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {mounted && (
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={() =>
+              setTheme(resolvedTheme === "dark" ? "light" : "dark")
+            }
+            aria-label="Toggle color theme"
+          >
+            {resolvedTheme === "dark" ? (
+              <SunIcon className="size-4" />
+            ) : (
+              <MoonIcon className="size-4" />
+            )}
+          </Button>
+        )}
+
+        <ConnectButton
+          chainStatus="icon"
+          showBalance={false}
+          accountStatus={{
+            smallScreen: "avatar",
+            largeScreen: "full",
+          }}
+        />
+      </div>
+    </header>
+  )
+}
+
