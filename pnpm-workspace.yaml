@@ -4,3 +4,13 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   msw: false
+  bufferutil: false
+  keccak: false
+  utf-8-validate: false
+
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - electron-to-chromium
+  - ip-address
+  - is-core-module
+  - lucide-react

@@ -11,11 +11,14 @@ import {
 
 const rpcUrl =
   process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL?.trim() ||
+  process.env.NEXT_PUBLIC_RPC_URL?.trim() ||
+  process.env.BASE_SEPOLIA_RPC_URL?.trim() ||
   "https://sepolia.base.org"
 
 // Safe non-empty fallback projectId so RainbowKit initializes cleanly during local/CI builds
 const walletConnectProjectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() ||
+  process.env.WALLETCONNECT_PROJECT_ID?.trim() ||
   "3a8170812b534d0ff9d794f19a901d64"
 
 const connectors = connectorsForWallets(
@@ -48,4 +51,3 @@ export const wagmiConfig = createConfig({
     [baseSepolia.id]: http(rpcUrl),
   },
 })
-

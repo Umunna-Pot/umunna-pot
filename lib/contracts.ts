@@ -4,11 +4,17 @@ export const ZERO_ADDRESS =
   "0x0000000000000000000000000000000000000000" as const
 
 export const MOCK_USDC_ADDRESS = ((
-  process.env.NEXT_PUBLIC_MOCK_USDC_ADDRESS?.trim() || ZERO_ADDRESS
+  process.env.NEXT_PUBLIC_MOCK_USDC_ADDRESS?.trim() ||
+  process.env.NEXT_PUBLIC_TOKEN_ADDRESS?.trim() ||
+  process.env.USDC_CONTRACT_ADDRESS?.trim() ||
+  ZERO_ADDRESS
 ) as `0x${string}`)
 
 export const UMUNNA_POT_ADDRESS = ((
-  process.env.NEXT_PUBLIC_UMUNNA_POT_ADDRESS?.trim() || ZERO_ADDRESS
+  process.env.NEXT_PUBLIC_UMUNNA_POT_ADDRESS?.trim() ||
+  process.env.NEXT_PUBLIC_POT_CONTRACT_ADDRESS?.trim() ||
+  process.env.UMUNNA_POT_CONTRACT_ADDRESS?.trim() ||
+  ZERO_ADDRESS
 ) as `0x${string}`)
 
 export function isContractConfigured(): boolean {
