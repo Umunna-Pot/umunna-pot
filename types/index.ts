@@ -55,6 +55,53 @@ export interface RoqquPaymentLinkResult {
   raw: Record<string, unknown>
 }
 
+export interface RoqquCheckoutResult {
+  rail: "payment_link" | "crypto_wallet"
+  paymentReference: string
+  communityId: number
+  contributorName: string
+  amountNgn: number
+  estimatedUsdc: number
+  ngnPerUsd: number
+  checkoutUrl?: string
+  depositAddress?: string
+  depositNetwork?: string
+  source: "ras-live" | "demo-simulated"
+}
+
+export interface RoqquWebhookResult {
+  status: "credited" | "duplicate"
+  paymentReference: string
+  communityId: number
+  usdcCredited: number
+  contributorTag: string
+  relayerTxHash: `0x${string}`
+  relayerMode: "onchain" | "simulated"
+  autoConvertedToken?: string
+}
+
+export interface SettlementReceipt {
+  receiptId: string
+  payoutId: number
+  communityId: number
+  amountUsdc: number
+  amountNgn: number
+  ngnPerUsd: number
+  settlementRail: string
+  recipient: string
+  onchainTxHash: `0x${string}`
+  txVerifiedOnchain: boolean
+  roqquStatus: "settled-ras" | "settled-simulated"
+  settledAt: string
+}
+
+export interface ContributionItem {
+  sender: `0x${string}`
+  amount: bigint
+  timestamp: bigint
+  contributorTag: string
+}
+
 export interface CommunitySummary {
   id: bigint
   name: string
@@ -66,6 +113,9 @@ export interface CommunitySummary {
   totalDisbursed: bigint
   createdAt: bigint
   exists: boolean
+  category?: string
+  description?: string
+  targetAmountNgn?: number
 }
 
 export interface PayoutProposal {
@@ -96,4 +146,3 @@ export interface DripVaultSummary {
   active: boolean
   exists: boolean
 }
-

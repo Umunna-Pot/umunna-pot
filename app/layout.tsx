@@ -1,13 +1,32 @@
 import type { Metadata } from "next"
-import { Geist_Mono, Inter } from "next/font/google"
+import {
+  Bricolage_Grotesque,
+  Geist_Mono,
+  Instrument_Serif,
+  Plus_Jakarta_Sans,
+} from "next/font/google"
 
 import "./globals.css"
 import { Web3Provider } from "@/components/providers/Web3Provider"
-import { AppShell } from "@/components/shell/AppShell"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+const fontSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
+
+const fontDisplay = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+})
+
+const fontSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+})
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -15,9 +34,9 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Umunna Pot | Programmable Group Treasury & Drip Vault",
+  title: "Umunna Pot | Programmable Group Treasury & Salary Drip Vault",
   description:
-    "Community finance platform for pooled funds, multi-sig disbursements, and scheduled salary drip vaults powered by Roqqu API Services (RAS) and Base.",
+    "Pool community funds with M-of-N quorum, accept bank transfers & crypto powered by Roqqu, and lock funds securely in Ethereum smart contracts on Base.",
 }
 
 export default function RootLayout({
@@ -31,16 +50,16 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "antialiased",
+        fontSans.variable,
+        fontDisplay.variable,
+        fontSerif.variable,
         fontMono.variable,
-        "font-sans",
-        inter.variable
+        "font-sans"
       )}
     >
       <body>
         <ThemeProvider>
-          <Web3Provider>
-            <AppShell>{children}</AppShell>
-          </Web3Provider>
+          <Web3Provider>{children}</Web3Provider>
         </ThemeProvider>
       </body>
     </html>
