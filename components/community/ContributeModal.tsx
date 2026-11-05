@@ -29,6 +29,10 @@ interface ContributeModalProps {
   ngnPerUsd: number
   targetAmountNgn?: number
   currentBalanceUsdc?: number
+  /** Open the dialog immediately (used by shared public contribution links). */
+  defaultOpen?: boolean
+  /** Override the trigger button styling (e.g. full-width on the public page). */
+  triggerClassName?: string
 }
 
 export function ContributeModal({
@@ -37,10 +41,12 @@ export function ContributeModal({
   ngnPerUsd,
   targetAmountNgn,
   currentBalanceUsdc = 0,
+  defaultOpen = false,
+  triggerClassName,
 }: ContributeModalProps) {
   const { contributeUsdc, applyRoqquWebhookCredit } = useCommunityPots()
   const invalidateDashboard = useInvalidateDashboard()
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(defaultOpen)
 
   const currentBalanceNgn = (currentBalanceUsdc || 0) * ngnPerUsd
   const hasTarget = Boolean(targetAmountNgn && targetAmountNgn > 0)
@@ -232,7 +238,7 @@ export function ContributeModal({
     >
       <DialogTrigger
         render={
-          <Button size="sm" className="flex-1 rounded-full">
+          <Button size="sm" className={triggerClassName ?? "flex-1 rounded-full"}>
             Contribute
           </Button>
         }
