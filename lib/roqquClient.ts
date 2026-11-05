@@ -424,3 +424,100 @@ export function decryptWebhookPayload(params: {
   ]).toString("utf8")
   return JSON.parse(decrypted) as Record<string, unknown>
 }
+
+
+export interface RoqquVerificationResult {
+  status: "READY" | "CONFIGURED BUT NOT VERIFIED" | "MISSING CONFIGURATION" | "BLOCKED"
+  mode: "staging" | "live"
+  baseUrl: string
+  publicApiReachable: boolean
+  authenticated: boolean
+  error?: string
+  latencyMs?: number
+}
+
+/**
+ * Verifies Roqqu API Services configuration and read-only connectivity.
+ * Tests public API rates and authenticated balance retrieval without initiating
+ * any transactions, payouts, swaps, or transfers.
+ */
+export async function verifyRoqquConnectivity(): Promise<RoqquVerificationResult> {
+  const { baseUrl, secretKey, mode } = getRoqquConfig()
+  const startTime = Date.now()
+
+  if (!secretKey || secretKey.includes("YOUR_") || secretKey.includes("your_")) {
+    return {
+      status: "MISSING CONFIGURATION",
+      mode,
+      baseUrl,
+      publicApiReachable: false,
+      authenticated: false,
+      error: "ROQQU_SECRET_KEY is not configured or contains placeholder text.",
+    }
+  }
+
+  try {
+    // 1. Verify public rates endpoint
+    let publicApiReachable = false
+    try {
+      await fetchJson("/rates", { method: "GET", timeoutMs: 5_000 })
+      publicApiReachable = true
+    } catch {
+      // Fallback check on /prices
+      try {
+        await fetchJson("/prices", { method: "GET", timeoutMs: 5_000 })
+        publicApiReachable = true
+      } catch {
+        publicApiReachable = false
+      }
+    }
+
+    // 2. Verify authenticated balance retrieval (read-only)
+    let authenticated = false
+    try {
+      await fetchJson("/balances", {
+        method: "POST",
+        headers: buildAuthHeaders({
+          "Content-Type": "application/x-www-form-urlencoded",
+        }),
+        body: new URLSearchParams().toString(),
+        timeoutMs: 8_000,
+      })
+      authenticated = true
+    } catch (authErr) {
+      const latencyMs = Date.now() - startTime
+      const msg = authErr instanceof Error ? authErr.message : "Authentication failed"
+      return {
+        status: "BLOCKED",
+        mode,
+        baseUrl,
+        publicApiReachable,
+        authenticated: false,
+        latencyMs,
+        error: `Roqqu authentication failed: ${msg}`,
+      }
+    }
+
+    const latencyMs = Date.now() - startTime
+    return {
+      status: authenticated && publicApiReachable ? "READY" : "CONFIGURED BUT NOT VERIFIED",
+      mode,
+      baseUrl,
+      publicApiReachable,
+      authenticated,
+      latencyMs,
+    }
+  } catch (err) {
+    const latencyMs = Date.now() - startTime
+    const msg = err instanceof Error ? err.message : "Network error"
+    return {
+      status: "CONFIGURED BUT NOT VERIFIED",
+      mode,
+      baseUrl,
+      publicApiReachable: false,
+      authenticated: false,
+      latencyMs,
+      error: `Roqqu connectivity check encountered an error: ${msg}`,
+    }
+  }
+}

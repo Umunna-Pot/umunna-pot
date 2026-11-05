@@ -4,11 +4,17 @@ export const ZERO_ADDRESS =
   "0x0000000000000000000000000000000000000000" as const
 
 export const MOCK_USDC_ADDRESS = ((
-  process.env.NEXT_PUBLIC_MOCK_USDC_ADDRESS?.trim() || ZERO_ADDRESS
+  process.env.NEXT_PUBLIC_MOCK_USDC_ADDRESS?.trim() ||
+  process.env.NEXT_PUBLIC_TOKEN_ADDRESS?.trim() ||
+  process.env.USDC_CONTRACT_ADDRESS?.trim() ||
+  ZERO_ADDRESS
 ) as `0x${string}`)
 
 export const UMUNNA_POT_ADDRESS = ((
-  process.env.NEXT_PUBLIC_UMUNNA_POT_ADDRESS?.trim() || ZERO_ADDRESS
+  process.env.NEXT_PUBLIC_UMUNNA_POT_ADDRESS?.trim() ||
+  process.env.NEXT_PUBLIC_POT_CONTRACT_ADDRESS?.trim() ||
+  process.env.UMUNNA_POT_CONTRACT_ADDRESS?.trim() ||
+  ZERO_ADDRESS
 ) as `0x${string}`)
 
 export function isContractConfigured(): boolean {
@@ -83,6 +89,48 @@ export const MOCK_USDC_ABI = [
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "string" }],
+  },
+  {
+    type: "event",
+    name: "VaultCreated",
+    inputs: [
+      { name: "vaultId", type: "uint256", indexed: true },
+      { name: "funder", type: "address", indexed: true },
+      { name: "beneficiary", type: "address", indexed: true },
+      { name: "guardian", type: "address", indexed: false },
+      { name: "totalAmount", type: "uint256", indexed: false },
+      { name: "installmentAmount", type: "uint256", indexed: false },
+      { name: "intervalSeconds", type: "uint64", indexed: false },
+      { name: "firstReleaseAt", type: "uint64", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "VaultReleased",
+    inputs: [
+      { name: "vaultId", type: "uint256", indexed: true },
+      { name: "beneficiary", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "remainingAmount", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "EarlyExitRequested",
+    inputs: [
+      { name: "vaultId", type: "uint256", indexed: true },
+      { name: "beneficiary", type: "address", indexed: true },
+    ],
+  },
+  {
+    type: "event",
+    name: "EarlyExitApproved",
+    inputs: [
+      { name: "vaultId", type: "uint256", indexed: true },
+      { name: "beneficiary", type: "address", indexed: true },
+      { name: "guardian", type: "address", indexed: true },
+      { name: "refundedAmount", type: "uint256", indexed: false },
+    ],
   },
 ] as const
 
@@ -329,6 +377,48 @@ export const UMUNNA_POT_ABI = [
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "dueIds", type: "uint256[]" }],
+  },
+  {
+    type: "event",
+    name: "VaultCreated",
+    inputs: [
+      { name: "vaultId", type: "uint256", indexed: true },
+      { name: "funder", type: "address", indexed: true },
+      { name: "beneficiary", type: "address", indexed: true },
+      { name: "guardian", type: "address", indexed: false },
+      { name: "totalAmount", type: "uint256", indexed: false },
+      { name: "installmentAmount", type: "uint256", indexed: false },
+      { name: "intervalSeconds", type: "uint64", indexed: false },
+      { name: "firstReleaseAt", type: "uint64", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "VaultReleased",
+    inputs: [
+      { name: "vaultId", type: "uint256", indexed: true },
+      { name: "beneficiary", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "remainingAmount", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "EarlyExitRequested",
+    inputs: [
+      { name: "vaultId", type: "uint256", indexed: true },
+      { name: "beneficiary", type: "address", indexed: true },
+    ],
+  },
+  {
+    type: "event",
+    name: "EarlyExitApproved",
+    inputs: [
+      { name: "vaultId", type: "uint256", indexed: true },
+      { name: "beneficiary", type: "address", indexed: true },
+      { name: "guardian", type: "address", indexed: true },
+      { name: "refundedAmount", type: "uint256", indexed: false },
+    ],
   },
 ] as const
 

@@ -129,3 +129,9 @@ export type GenerateDepositWalletInput = z.infer<
 export type RoqquCheckoutInput = z.infer<typeof roqquCheckoutInputSchema>
 export type RoqquDemoWebhookInput = z.infer<typeof roqquDemoWebhookSchema>
 export type RoqquSettleInput = z.infer<typeof roqquSettleInputSchema>
+
+export const verifyDripVaultInputSchema = z.object({
+  txHash: txHashSchema,
+})
+
+export type VerifyDripVaultInput = z.infer<typeof verifyDripVaultInputSchema>
