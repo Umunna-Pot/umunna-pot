@@ -33,6 +33,10 @@ export function CreateFundModal() {
   const invalidateDashboard = useInvalidateDashboard()
   const [open, setOpen] = React.useState(false)
   const [name, setName] = React.useState("")
+  const [category, setCategory] = React.useState<
+    "alumni" | "welfare" | "family" | "project" | "general"
+  >("alumni")
+  const [description, setDescription] = React.useState("")
   const [targetAmountNgn, setTargetAmountNgn] = React.useState("5000000")
   const [signers, setSigners] = React.useState<string[]>([
     address ?? "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
@@ -117,12 +121,13 @@ export function CreateFundModal() {
       const saved = await postJsonWithRetry("/api/communities", {
         onChainPotId,
         name: cleanName,
+        description: description.trim(),
         targetAmountNgn: numTargetNgn,
         targetAmountUsdc: numTargetUsdc,
         quorumThreshold: threshold,
         signers: validatedSigners,
         creatorAddress: address || validatedSigners[0],
-        category: "general",
+        category,
       })
       if (saved) {
         invalidateDashboard()
@@ -140,6 +145,8 @@ export function CreateFundModal() {
             : "Active in interactive Demo Showcase mode",
       })
       setName("")
+      setDescription("")
+      setCategory("alumni")
       setTargetAmountNgn("5000000")
       setOpen(false)
     } catch (err) {
@@ -161,7 +168,7 @@ export function CreateFundModal() {
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[88vh] flex flex-col p-4 sm:p-5">
         <DialogHeader>
           <DialogTitle className="font-display text-lg">
             New Multi-Sig Community Pot
@@ -172,7 +179,8 @@ export function CreateFundModal() {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 space-y-3.5 overflow-y-auto pr-1">
           <div className="space-y-1.5">
             <Label htmlFor="pot-name">Community / Drive Name</Label>
             <Input
@@ -181,6 +189,43 @@ export function CreateFundModal() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pot-category">Pot Category</Label>
+            <select
+              id="pot-category"
+              value={category}
+              onChange={(e) =>
+                setCategory(
+                  e.target.value as
+                    | "alumni"
+                    | "welfare"
+                    | "family"
+                    | "project"
+                    | "general"
+                )
+              }
+              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs font-medium"
+            >
+              <option value="alumni">🎓 Alumni Initiative (School & Campus Builds)</option>
+              <option value="welfare">🏥 Healthcare & Emergency Welfare</option>
+              <option value="project">⚡ Community Project / Homeland Infrastructure</option>
+              <option value="family">🤝 Family & Kinship Circle</option>
+              <option value="general">🌐 General Multi-Sig Pot</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pot-description">Purpose / Description</Label>
+            <textarea
+              id="pot-description"
+              rows={2}
+              placeholder="e.g. Milestone savings pool by alumni home and abroad to finance the new student tech hub"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-lg border border-input bg-card p-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </div>
 
@@ -247,7 +292,7 @@ export function CreateFundModal() {
               </Button>
             </div>
 
-            <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+            <div className="max-h-32 space-y-2 overflow-y-auto pr-1">
               {signers.map((signer, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <Input
@@ -301,7 +346,9 @@ export function CreateFundModal() {
             </div>
           </div>
 
-          <DialogFooter>
+          </div>
+
+          <DialogFooter className="mt-3 pt-3">
             <Button type="submit" disabled={submitting} className="rounded-full">
               {submitting && <Loader2Icon className="size-4 animate-spin" />}
               Deploy Community Pot
