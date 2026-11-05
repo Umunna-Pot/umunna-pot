@@ -86,3 +86,42 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PATCH(request: Request) {
+  try {
+    await dbConnect()
+    const body = await request.json()
+    const { onChainProposalId, onChainPotId, status, executionTxHash, approvalAddress } = body
+
+    if (!onChainProposalId) {
+      return NextResponse.json({ message: "Missing onChainProposalId" }, { status: 400 })
+    }
+
+    const filter: Record<string, unknown> = {
+      onChainProposalId: Number(onChainProposalId),
+    }
+    if (onChainPotId) {
+      filter.onChainPotId = Number(onChainPotId)
+    }
+
+    const update: Record<string, unknown> = {}
+    if (status) update.status = status
+    if (executionTxHash) update.executionTxHash = executionTxHash
+
+    const updateOps: Record<string, unknown> = {}
+    if (Object.keys(update).length > 0) {
+      updateOps.$set = update
+    }
+    if (approvalAddress) {
+      updateOps.$addToSet = { approvals: approvalAddress.toLowerCase().trim() }
+    }
+
+    const updated = await PayoutProposal.findOneAndUpdate(filter, updateOps, { new: true })
+    return NextResponse.json({ proposal: updated })
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Failed to update proposal" },
+      { status: 500 }
+    )
+  }
+}
+

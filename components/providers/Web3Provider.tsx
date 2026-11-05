@@ -26,8 +26,18 @@ function ThemedRainbowKit({ children }: { children: React.ReactNode }) {
 
   const rkTheme =
     mounted && resolvedTheme === "dark"
-      ? darkTheme({ borderRadius: "medium" })
-      : lightTheme({ borderRadius: "medium" })
+      ? darkTheme({
+          accentColor: "#10b981",
+          accentColorForeground: "#06281e",
+          borderRadius: "large",
+          overlayBlur: "small",
+        })
+      : lightTheme({
+          accentColor: "#059669",
+          accentColorForeground: "#ffffff",
+          borderRadius: "large",
+          overlayBlur: "small",
+        })
 
   return (
     <RainbowKitProvider initialChain={baseSepolia} theme={rkTheme}>
