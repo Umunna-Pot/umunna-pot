@@ -14,6 +14,7 @@ import {
 import { ContributeModal } from "@/components/community/ContributeModal"
 import { PayoutCard } from "@/components/community/PayoutCard"
 import { ProposePayoutModal } from "@/components/community/ProposePayoutModal"
+import { ShareContributionLink } from "@/components/community/ShareContributionLink"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -177,7 +178,11 @@ export default function CommunityDetailPage() {
           All Community Pots
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <ShareContributionLink
+            communityId={potId}
+            communityName={community.name}
+          />
           <ContributeModal
             communityId={potId}
             communityName={community.name}

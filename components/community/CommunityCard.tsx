@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowRightIcon, ShieldCheckIcon, UsersIcon } from "lucide-react"
 
 import { ContributeModal } from "@/components/community/ContributeModal"
+import { ShareContributionLink } from "@/components/community/ShareContributionLink"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -87,7 +88,7 @@ export function CommunityCard({ community, ngnPerUsd }: CommunityCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="flex items-center gap-2 pt-2">
+      <CardFooter className="flex flex-wrap items-center gap-2 pt-2">
         <ContributeModal
           communityId={potId}
           communityName={community.name}
@@ -103,6 +104,13 @@ export function CommunityCard({ community, ngnPerUsd }: CommunityCardProps) {
           Manage Pot
           <ArrowRightIcon className="size-3.5" />
         </Button>
+        <ShareContributionLink
+          communityId={potId}
+          communityName={community.name}
+          className="w-full rounded-full"
+          variant="ghost"
+          label="Share contribution link"
+        />
       </CardFooter>
     </Card>
   )
