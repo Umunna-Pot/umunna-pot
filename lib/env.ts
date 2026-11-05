@@ -67,6 +67,10 @@ export const envSchema = z.object({
     .min(1, "ROQQU_SECRET_KEY is required for Roqqu operations"),
   ROQQU_PUBLIC_KEY: z.string().optional(),
 
+  // Database Configuration (Optional / Detached Demo Mode Supported)
+  MONGODB_URI: z.string().optional(),
+  MONGODB_DB: z.string().default("umunna_pot"),
+
   // Server-only Relayer & Signer Private Keys (Optional for current stage)
   RELAYER_PRIVATE_KEY: z
     .string()
@@ -122,6 +126,8 @@ export function validateEnvironment(): EnvValidationReport {
     ROQQU_MODE: process.env.ROQQU_MODE,
     ROQQU_SECRET_KEY: process.env.ROQQU_SECRET_KEY,
     ROQQU_PUBLIC_KEY: process.env.ROQQU_PUBLIC_KEY,
+    MONGODB_URI: process.env.MONGODB_URI,
+    MONGODB_DB: process.env.MONGODB_DB,
     RELAYER_PRIVATE_KEY: process.env.RELAYER_PRIVATE_KEY,
     KEEPER_WALLET_PRIVATE_KEY: process.env.KEEPER_WALLET_PRIVATE_KEY,
     DEPLOYER_PRIVATE_KEY: process.env.DEPLOYER_PRIVATE_KEY,
@@ -169,6 +175,7 @@ export function validateEnvironment(): EnvValidationReport {
   const optionalKeys = [
     "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID",
     "OPENROUTER_FALLBACK_MODEL",
+    "MONGODB_URI",
     "RELAYER_PRIVATE_KEY",
     "KEEPER_WALLET_PRIVATE_KEY",
     "DEPLOYER_PRIVATE_KEY",
@@ -224,6 +231,8 @@ export function getServerEnv(): ServerEnv {
     ROQQU_MODE: process.env.ROQQU_MODE,
     ROQQU_SECRET_KEY: process.env.ROQQU_SECRET_KEY,
     ROQQU_PUBLIC_KEY: process.env.ROQQU_PUBLIC_KEY,
+    MONGODB_URI: process.env.MONGODB_URI,
+    MONGODB_DB: process.env.MONGODB_DB,
     RELAYER_PRIVATE_KEY: process.env.RELAYER_PRIVATE_KEY,
     KEEPER_WALLET_PRIVATE_KEY: process.env.KEEPER_WALLET_PRIVATE_KEY,
     DEPLOYER_PRIVATE_KEY: process.env.DEPLOYER_PRIVATE_KEY,

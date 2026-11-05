@@ -39,6 +39,8 @@ All local variables are configured in `.env.local` (which is strictly ignored by
 | `NEXT_PUBLIC_UMUNNA_POT_ADDRESS` | Public / Browser | `0x0000000000000000000000000000000000000000` | Deployed address of `UmunnaPot.sol`. Configured after deployment. |
 | `NEXT_PUBLIC_MOCK_USDC_ADDRESS` | Public / Browser | `0x0000000000000000000000000000000000000000` | Deployed address of `MockUSDC.sol`. Configured after deployment. |
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Public / Browser | Safe static fallback | WalletConnect Cloud project ID for RainbowKit QR modal. |
+| `MONGODB_URI` | Server-Side Only | Empty (Detached mode) | Optional MongoDB connection string for pot caching & indexing. Operates in in-memory detached mode if omitted. |
+| `MONGODB_DB` | Server-Side Only | `umunna_pot` | MongoDB database name. |
 | `RELAYER_PRIVATE_KEY` | Server-Side Only | Empty | 64-character hex key for backend relayer settlement. |
 | `KEEPER_WALLET_PRIVATE_KEY` | Server-Side Only | Empty | 64-character hex key for automated `releaseDue()` keeper bots. |
 | `DEPLOYER_PRIVATE_KEY` | Server-Side Only | Empty | 64-character hex key for Foundry deployment scripts. |
