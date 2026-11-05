@@ -82,6 +82,17 @@ export function PayoutCard({ payout, community, ngnPerUsd }: PayoutCardProps) {
       const txHash = await executePayout(Number(payout.id))
       const amountUsdcNumeric = Number(formatUnits(payout.amount, USDC_DECIMALS))
 
+      void fetch("/api/payouts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          onChainProposalId: Number(payout.id),
+          onChainPotId: Number(payout.communityId),
+          status: "executed",
+          executionTxHash: txHash,
+        }),
+      }).catch(() => {})
+
       if (isRoqquRail) {
         const res = await fetch("/api/roqqu/settle", {
           method: "POST",

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+import { dbConnect } from "@/lib/db"
+import PayoutProposal from "@/models/PayoutProposal"
 import {
   isTxAlreadySettled,
   markTxSettled,
@@ -71,6 +73,16 @@ export async function POST(request: Request) {
     }
 
     markTxSettled(input.txHash)
+
+    try {
+      await dbConnect()
+      await PayoutProposal.findOneAndUpdate(
+        { onChainProposalId: input.payoutId, onChainPotId: input.communityId },
+        { $set: { status: "executed", executionTxHash: input.txHash } }
+      )
+    } catch {
+      // Non-blocking DB status update
+    }
 
     const receipt: SettlementReceipt = {
       receiptId,

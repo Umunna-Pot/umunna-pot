@@ -7,6 +7,7 @@ import {
   ExternalLinkIcon, RefreshCwIcon, ShieldCheckIcon, UsersIcon, WalletIcon,
 } from "lucide-react"
 import { useAccount, useChainId } from "wagmi"
+import { formatUnits } from "viem"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,7 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PotCardSkeleton, ActivityRowSkeleton } from "@/components/shared/ContentSkeletons"
 import { ContributeModal } from "@/components/community/ContributeModal"
+import { useCommunityPots } from "@/hooks/useCommunityPots"
 import { useRoqquRates } from "@/hooks/useRoqquRates"
 import {
   useCommunitiesQuery,
@@ -27,6 +29,7 @@ import {
   isContractConfigured,
 } from "@/lib/contracts"
 import {
+  USDC_DECIMALS,
   formatNgn,
   shortenAddress,
 } from "@/lib/format"
@@ -37,6 +40,12 @@ export default function DashboardPage() {
   const { data: dbCommunities = [], isLoading: commsLoading, refetch: refetchComms, isFetching: commsFetching } = useCommunitiesQuery()
   const { data: dbContributions = [], isLoading: contribsLoading, refetch: refetchContribs, isFetching: contribsFetching } = useContributionsQuery()
   const { data: dbProposals = [], isLoading: propsLoading, refetch: refetchProps, isFetching: propsFetching } = useProposalsQuery()
+  const {
+    communities: onChainCommunities,
+    payouts: onChainPayouts,
+    liveContract,
+    refetchAll: refetchOnChain,
+  } = useCommunityPots()
 
   const loadingData = commsLoading || contribsLoading || propsLoading
   const isRefreshing = commsFetching || contribsFetching || propsFetching || ratesFetching
@@ -46,7 +55,8 @@ export default function DashboardPage() {
     void refetchComms()
     void refetchContribs()
     void refetchProps()
-  }, [refetchRates, refetchComms, refetchContribs, refetchProps])
+    void refetchOnChain()
+  }, [refetchRates, refetchComms, refetchContribs, refetchProps, refetchOnChain])
 
   const ngnPerUsd = ratesData?.ngnPerUsd ?? 1375
   const contractReady = isContractConfigured()
@@ -56,7 +66,27 @@ export default function DashboardPage() {
     0
   )
   const totalVaultBalanceNgn = totalVaultBalanceUsdc * ngnPerUsd
-  const pendingProposals = dbProposals.filter((p) => p.status === "proposed")
+
+  const activeDbPotIds = React.useMemo(() => {
+    return new Set(dbCommunities.map((c) => Number(c.onChainPotId)))
+  }, [dbCommunities])
+
+  const communityMap = React.useMemo(() => {
+    const map = new Map<number, (typeof onChainCommunities)[number]>()
+    onChainCommunities.forEach((c) => map.set(Number(c.id), c))
+    return map
+  }, [onChainCommunities])
+
+  // In live mode, visible payouts correspond to registered pots
+  const visiblePayouts = React.useMemo(() => {
+    if (!liveContract) return onChainPayouts
+    return onChainPayouts.filter((p) => activeDbPotIds.has(Number(p.communityId)))
+  }, [onChainPayouts, liveContract, activeDbPotIds])
+
+  // Only unexecuted payouts require quorum voting / execution (matches Disbursements page)
+  const pendingPayouts = React.useMemo(() => {
+    return visiblePayouts.filter((p) => !p.executed)
+  }, [visiblePayouts])
 
   return (
     <div className="space-y-8 pb-12">
@@ -160,7 +190,7 @@ export default function DashboardPage() {
               <Skeleton className="my-1 h-9 w-28 rounded-xl" />
             ) : (
               <CardTitle className="font-display text-3xl font-black tracking-tight">
-                {pendingProposals.length > 0 ? `${pendingProposals.length} Pending` : "All Clear"}
+                {pendingPayouts.length > 0 ? `${pendingPayouts.length} Pending` : "All Clear"}
               </CardTitle>
             )}
           </CardHeader>
@@ -174,44 +204,63 @@ export default function DashboardPage() {
       </div>
 
       {/* Pending Proposal Banner (If any) */}
-      {pendingProposals.length > 0 && (
-        <Card className="rounded-3xl border-amber-500/30 bg-amber-500/5 p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3.5">
-              <div className="mt-0.5 rounded-2xl bg-amber-500/10 p-2.5 text-amber-500">
-                <AlertTriangleIcon className="size-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400">
-                    Quorum Vote Required
-                  </Badge>
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Pot #{pendingProposals[0]?.onChainPotId}
-                  </span>
-                </div>
-                <h4 className="mt-1 font-display text-base font-bold text-foreground">
-                  {pendingProposals[0]?.title}
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  Disbursement request:{" "}
-                  <strong className="text-foreground">
-                    {formatNgn(pendingProposals[0]?.amountNgn || 0)}
-                  </strong>{" "}
-                  (${pendingProposals[0]?.amountUsdc} USDC) · {pendingProposals[0]?.approvals.length} of 2 signatures collected
-                </p>
-              </div>
-            </div>
+      {pendingPayouts.length > 0 && (() => {
+        const p = pendingPayouts[0]
+        const potId = Number(p.communityId)
+        const pot = communityMap.get(potId)
+        const threshold = Number(pot?.threshold ?? BigInt(2))
+        const approvalCount = Number(p.approvalCount)
+        const quorumMet = approvalCount >= threshold
 
-            <Link href="/disbursements">
-              <Button size="sm" className="gap-2 rounded-full font-semibold shadow-sm">
-                Review &amp; Sign
-                <ArrowUpRightIcon className="size-3.5" />
-              </Button>
-            </Link>
-          </div>
-        </Card>
-      )}
+        // Match with DB proposal metadata (title, custom description) if available
+        const dbMeta = dbProposals.find(
+          (dp) =>
+            Number(dp.onChainProposalId) === Number(p.id) &&
+            Number(dp.onChainPotId) === potId
+        )
+        const title = dbMeta?.title || p.reason || `Disbursement Proposal #${Number(p.id)}`
+        const amountUsdcNumeric = Number(formatUnits(p.amount, USDC_DECIMALS))
+        const amountNgn = dbMeta?.amountNgn || Math.round(amountUsdcNumeric * ngnPerUsd)
+
+        return (
+          <Card className="rounded-3xl border-amber-500/30 bg-amber-500/5 p-5 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3.5">
+                <div className="mt-0.5 rounded-2xl bg-amber-500/10 p-2.5 text-amber-500">
+                  <AlertTriangleIcon className="size-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400">
+                      {quorumMet ? "Quorum Met · Ready to Execute" : "Quorum Vote Required"}
+                    </Badge>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Pot #{potId}{pot?.name ? ` · ${pot.name}` : ""}
+                    </span>
+                  </div>
+                  <h4 className="mt-1 font-display text-base font-bold text-foreground">
+                    {title}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Disbursement request:{" "}
+                    <strong className="text-foreground">
+                      {formatNgn(amountNgn)}
+                    </strong>{" "}
+                    (${amountUsdcNumeric.toFixed(2)} USDC) · {approvalCount} of {threshold} signatures collected
+                  </p>
+                </div>
+              </div>
+
+              <Link href="/disbursements">
+                <Button size="sm" className="gap-2 rounded-full font-semibold shadow-sm">
+                  {quorumMet ? "Review & Execute" : "Review & Sign"}
+                  <ArrowUpRightIcon className="size-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        )
+      })()}
 
       {/* Active Community Pots Grid */}
       <div className="space-y-4">

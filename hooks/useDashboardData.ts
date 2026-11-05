@@ -33,12 +33,22 @@ export interface MongoContribution {
 
 export interface MongoProposal {
   _id: string
+  communityId?: string
   onChainPotId: number
+  onChainProposalId?: number
   title: string
+  description?: string
+  recipientType?: "bank_account" | "crypto_address"
+  recipientBank?: string
+  recipientAccountNumber?: string
+  recipientAccountName?: string
+  recipientAddress?: string
   amountNgn: number
   amountUsdc: number
   approvals: string[]
   status: string
+  executionTxHash?: string
+  createdAt?: string
 }
 
 export function useCommunitiesQuery() {

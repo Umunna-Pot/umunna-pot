@@ -9,6 +9,7 @@ import {
   RefreshCwIcon,
   SunIcon,
   TrendingUpIcon,
+  WalletIcon,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -119,14 +120,95 @@ export function Header() {
           </Button>
         )}
 
-        <ConnectButton
-          chainStatus="icon"
-          showBalance={false}
-          accountStatus={{
-            smallScreen: "avatar",
-            largeScreen: "full",
+        <ConnectButton.Custom>
+          {({
+            account,
+            chain,
+            openAccountModal,
+            openChainModal,
+            openConnectModal,
+            authenticationStatus,
+            mounted: rkMounted,
+          }) => {
+            const ready = rkMounted && authenticationStatus !== "loading"
+            const connected =
+              ready &&
+              account &&
+              chain &&
+              (!authenticationStatus ||
+                authenticationStatus === "authenticated")
+
+            return (
+              <div
+                {...(!ready && {
+                  "aria-hidden": true,
+                  style: {
+                    opacity: 0,
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  },
+                })}
+              >
+                {!connected ? (
+                  <Button
+                    onClick={openConnectModal}
+                    type="button"
+                    className="rounded-full shadow-sm gap-2 text-xs h-9 px-4 font-medium"
+                  >
+                    <WalletIcon className="size-3.5" />
+                    Connect Wallet
+                  </Button>
+                ) : chain.unsupported ? (
+                  <Button
+                    onClick={openChainModal}
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="rounded-full text-xs"
+                  >
+                    Wrong Network
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      onClick={openChainModal}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full gap-1.5 text-xs font-mono px-3"
+                    >
+                      {chain.hasIcon && (
+                        <div
+                          className="size-3 rounded-full overflow-hidden shrink-0"
+                          style={{ background: chain.iconBackground }}
+                        >
+                          {chain.iconUrl && (
+                            <img
+                              alt={chain.name ?? "Chain icon"}
+                              src={chain.iconUrl}
+                              className="size-3"
+                            />
+                          )}
+                        </div>
+                      )}
+                      <span className="hidden sm:inline">{chain.name}</span>
+                    </Button>
+
+                    <Button
+                      onClick={openAccountModal}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full text-xs font-mono px-3"
+                    >
+                      {account.displayName}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )
           }}
-        />
+        </ConnectButton.Custom>
       </div>
     </header>
   )

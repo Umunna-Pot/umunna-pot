@@ -62,7 +62,7 @@ export function SyncRecoveryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl">
+      <DialogContent className="sm:max-w-lg rounded-3xl p-6">
         <DialogHeader className="space-y-2">
           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
             <AlertTriangleIcon className="size-5" />
