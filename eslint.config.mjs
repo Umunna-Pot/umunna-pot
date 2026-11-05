@@ -5,6 +5,11 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -14,11 +19,6 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "contracts/**",
   ]),
-  {
-    rules: {
-      "react-hooks/set-state-in-effect": "warn",
-    },
-  },
 ]);
 
 export default eslintConfig;
