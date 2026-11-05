@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   AlertCircleIcon,
   RefreshCwIcon,
@@ -15,16 +16,52 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PotCardSkeleton } from "@/components/shared/ContentSkeletons"
 import { useCommunityPots } from "@/hooks/useCommunityPots"
+import { useCommunitiesQuery } from "@/hooks/useDashboardData"
 import { useRoqquRates } from "@/hooks/useRoqquRates"
 import { formatNgn, formatUsdc, usdcToNgn } from "@/lib/format"
 
 export default function CommunityFundsPage() {
   const { data: ratesData } = useRoqquRates()
-  const { communities, isLoading, isError, refetchAll, liveContract } =
-    useCommunityPots()
+  const {
+    communities: onChainCommunities,
+    isLoading: onChainLoading,
+    isError,
+    refetchAll: refetchOnChain,
+    liveContract,
+  } = useCommunityPots()
+  const {
+    data: dbCommunities = [],
+    isLoading: dbLoading,
+    refetch: refetchDb,
+  } = useCommunitiesQuery()
 
   const ngnPerUsd = ratesData?.ngnPerUsd ?? 1375
+
+  // Display only active community pots registered in the database.
+  // In demo mode without live contracts, fallback to demo state.
+  const communities = React.useMemo(() => {
+    if (!liveContract) return onChainCommunities
+    const dbMap = new Map(dbCommunities.map((c) => [Number(c.onChainPotId), c]))
+    return onChainCommunities
+      .filter((c) => dbMap.has(Number(c.id)))
+      .map((c) => {
+        const dbComm = dbMap.get(Number(c.id))
+        return {
+          ...c,
+          category: dbComm?.category,
+          description: dbComm?.description,
+          targetAmountNgn: dbComm?.targetAmountNgn,
+        }
+      })
+  }, [liveContract, onChainCommunities, dbCommunities])
+
   const totalBalance = communities.reduce((acc, c) => acc + c.balance, BigInt(0))
+  const isLoading = onChainLoading || dbLoading
+
+  const handleRefetch = React.useCallback(async () => {
+    void refetchDb()
+    await refetchOnChain()
+  }, [refetchDb, refetchOnChain])
 
   return (
     <div className="space-y-6">
@@ -86,7 +123,7 @@ export default function CommunityFundsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void refetchAll()}
+              onClick={() => void handleRefetch()}
             >
               <RefreshCwIcon className="size-3.5" />
               Retry

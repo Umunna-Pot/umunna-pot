@@ -31,10 +31,17 @@ export function CommunityCard({ community, ngnPerUsd }: CommunityCardProps) {
     <Card className="group flex flex-col justify-between rounded-3xl transition-all hover:border-primary/40 hover:shadow-md">
       <CardHeader className="space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <Badge variant="secondary" className="font-mono text-[11px]">
-            <ShieldCheckIcon className="mr-1 size-3 text-primary" />
-            {Number(community.threshold)}-of-{community.signers.length} Quorum
-          </Badge>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="secondary" className="font-mono text-[11px]">
+              <ShieldCheckIcon className="mr-1 size-3 text-primary" />
+              {Number(community.threshold)}-of-{community.signers.length} Quorum
+            </Badge>
+            {community.category && (
+              <Badge variant="outline" className="font-mono text-[10px] capitalize">
+                {community.category}
+              </Badge>
+            )}
+          </div>
           <span className="font-mono text-[11px] text-muted-foreground">
             Pot #{potId}
           </span>
@@ -44,7 +51,12 @@ export function CommunityCard({ community, ngnPerUsd }: CommunityCardProps) {
           <CardTitle className="font-display text-lg tracking-tight">
             {community.name}
           </CardTitle>
-          <CardDescription className="mt-1 flex items-center gap-1.5 text-xs">
+          {community.description && (
+            <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+              {community.description}
+            </p>
+          )}
+          <CardDescription className="mt-1.5 flex items-center gap-1.5 text-xs">
             <UsersIcon className="size-3.5 text-muted-foreground" />
             <span>
               Created by {shortenAddress(community.creator, 4)} &middot;{" "}

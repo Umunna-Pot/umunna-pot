@@ -12,18 +12,34 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ProposalCardSkeleton } from "@/components/shared/ContentSkeletons"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCommunityPots } from "@/hooks/useCommunityPots"
+import { useCommunitiesQuery } from "@/hooks/useDashboardData"
 import { useRoqquRates } from "@/hooks/useRoqquRates"
 import { MOCK_USDC_ADDRESS } from "@/lib/contracts"
 
-type FilterTab = "all" | "pending" | "ready" | "executed"
+type FilterTab = "all" | "ready" | "pending" | "executed"
 
 export default function DisbursementsPage() {
   const { data: ratesData } = useRoqquRates()
-  const { communities, payouts, isLoading, isError, refetchAll } =
-    useCommunityPots()
+  const {
+    communities,
+    payouts,
+    isLoading: onChainLoading,
+    isError,
+    refetchAll: refetchOnChain,
+    liveContract,
+  } = useCommunityPots()
+  const {
+    data: dbCommunities = [],
+    isLoading: dbLoading,
+    refetch: refetchDb,
+  } = useCommunitiesQuery()
   const [filter, setFilter] = React.useState<FilterTab>("all")
 
   const ngnPerUsd = ratesData?.ngnPerUsd ?? 1375
+
+  const activeDbPotIds = React.useMemo(() => {
+    return new Set(dbCommunities.map((c) => Number(c.onChainPotId)))
+  }, [dbCommunities])
 
   const communityMap = React.useMemo(() => {
     const map = new Map<number, (typeof communities)[number]>()
@@ -31,8 +47,14 @@ export default function DisbursementsPage() {
     return map
   }, [communities])
 
+  // Filter payouts so that in live mode, only proposals for active registered pots are shown
+  const visiblePayouts = React.useMemo(() => {
+    if (!liveContract) return payouts
+    return payouts.filter((p) => activeDbPotIds.has(Number(p.communityId)))
+  }, [payouts, liveContract, activeDbPotIds])
+
   const filteredPayouts = React.useMemo(() => {
-    return payouts.filter((p) => {
+    return visiblePayouts.filter((p) => {
       const pot = communityMap.get(Number(p.communityId))
       const threshold = Number(pot?.threshold ?? BigInt(2))
       const quorumMet = Number(p.approvalCount) >= threshold
@@ -42,7 +64,14 @@ export default function DisbursementsPage() {
       if (filter === "pending") return !p.executed && !quorumMet
       return true
     })
-  }, [payouts, communityMap, filter])
+  }, [visiblePayouts, communityMap, filter])
+
+  const isLoading = onChainLoading || dbLoading
+
+  const handleRefetch = React.useCallback(async () => {
+    void refetchDb()
+    await refetchOnChain()
+  }, [refetchDb, refetchOnChain])
 
   const addUsdcToMetaMask = React.useCallback(async () => {
     try {
@@ -111,7 +140,7 @@ export default function DisbursementsPage() {
         onValueChange={(val) => setFilter(val as FilterTab)}
       >
         <TabsList>
-          <TabsTrigger value="all">All ({payouts.length})</TabsTrigger>
+          <TabsTrigger value="all">All ({visiblePayouts.length})</TabsTrigger>
           <TabsTrigger value="ready">Quorum Met</TabsTrigger>
           <TabsTrigger value="pending">Awaiting Signers</TabsTrigger>
           <TabsTrigger value="executed">Executed</TabsTrigger>
@@ -128,7 +157,7 @@ export default function DisbursementsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void refetchAll()}
+              onClick={() => void handleRefetch()}
             >
               <RefreshCwIcon className="size-3.5" />
               Retry

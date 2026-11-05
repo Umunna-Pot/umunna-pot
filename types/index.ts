@@ -113,6 +113,9 @@ export interface CommunitySummary {
   totalDisbursed: bigint
   createdAt: bigint
   exists: boolean
+  category?: string
+  description?: string
+  targetAmountNgn?: number
 }
 
 export interface PayoutProposal {
