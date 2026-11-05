@@ -17,7 +17,7 @@ const FALLBACK_SENDER =
   "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" as `0x${string}`
 
 export function useCommunityPots() {
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
   const publicClient = usePublicClient()
   const { writeContractAsync } = useWriteContract()
   const liveContract = isContractConfigured()
@@ -179,6 +179,9 @@ export function useCommunityPots() {
       claimDemoUsdcFaucet()
       return null
     }
+    if (!isConnected || !address || !publicClient) {
+      throw new Error("Please connect your Base Sepolia wallet first.")
+    }
     const hash = await writeContractAsync({
       address: MOCK_USDC_ADDRESS,
       abi: MOCK_USDC_ABI,
@@ -189,7 +192,7 @@ export function useCommunityPots() {
     }
     await refetchAll()
     return hash
-  }, [liveContract, writeContractAsync, publicClient, refetchAll])
+  }, [liveContract, isConnected, address, writeContractAsync, publicClient, refetchAll])
 
   const createCommunity = React.useCallback(
     async (params: {
@@ -203,6 +206,9 @@ export function useCommunityPots() {
           creator: address ?? FALLBACK_SENDER,
         })
         return { txHash: null }
+      }
+      if (!isConnected || !address || !publicClient) {
+        throw new Error("Please connect your Base Sepolia wallet first.")
       }
       const hash = await writeContractAsync({
         address: UMUNNA_POT_ADDRESS,
@@ -227,7 +233,7 @@ export function useCommunityPots() {
       await refetchAll()
       return { txHash: hash, onChainPotId }
     },
-    [liveContract, address, writeContractAsync, publicClient, refetchAll]
+    [liveContract, isConnected, address, writeContractAsync, publicClient, refetchAll]
   )
 
   const contributeUsdc = React.useCallback(
@@ -323,6 +329,9 @@ export function useCommunityPots() {
         })
         return null
       }
+      if (!isConnected || !address || !publicClient) {
+        throw new Error("Please connect your Base Sepolia wallet first.")
+      }
       const hash = await writeContractAsync({
         address: UMUNNA_POT_ADDRESS,
         abi: UMUNNA_POT_ABI,
@@ -341,7 +350,7 @@ export function useCommunityPots() {
       await refetchAll()
       return hash
     },
-    [liveContract, address, writeContractAsync, publicClient, refetchAll]
+    [liveContract, isConnected, address, writeContractAsync, publicClient, refetchAll]
   )
 
   const approvePayout = React.useCallback(
@@ -349,6 +358,9 @@ export function useCommunityPots() {
       if (!liveContract) {
         approveDemoPayout(payoutId, address ?? "0xdemo-second-signer")
         return null
+      }
+      if (!isConnected || !address || !publicClient) {
+        throw new Error("Please connect your Base Sepolia wallet first.")
       }
       const hash = await writeContractAsync({
         address: UMUNNA_POT_ADDRESS,
@@ -362,13 +374,16 @@ export function useCommunityPots() {
       await refetchAll()
       return hash
     },
-    [liveContract, address, writeContractAsync, publicClient, refetchAll]
+    [liveContract, isConnected, address, writeContractAsync, publicClient, refetchAll]
   )
 
   const executePayout = React.useCallback(
     async (payoutId: number): Promise<`0x${string}`> => {
       if (!liveContract) {
         return executeDemoPayout(payoutId)
+      }
+      if (!isConnected || !address || !publicClient) {
+        throw new Error("Please connect your Base Sepolia wallet first.")
       }
       const hash = await writeContractAsync({
         address: UMUNNA_POT_ADDRESS,
@@ -382,7 +397,7 @@ export function useCommunityPots() {
       await refetchAll()
       return hash
     },
-    [liveContract, writeContractAsync, publicClient, refetchAll]
+    [liveContract, isConnected, address, writeContractAsync, publicClient, refetchAll]
   )
 
   return {

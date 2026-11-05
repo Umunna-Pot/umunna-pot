@@ -12,6 +12,8 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatUnits } from "viem"
+import { useAccount } from "wagmi"
+import { useConnectModal } from "@rainbow-me/rainbowkit"
 
 import { SettlementReceiptDialog } from "@/components/community/SettlementReceiptDialog"
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +49,8 @@ interface PayoutCardProps {
 }
 
 export function PayoutCard({ payout, community, ngnPerUsd }: PayoutCardProps) {
+  const { address, isConnected } = useAccount()
+  const { openConnectModal } = useConnectModal()
   const { approvePayout, executePayout } = useCommunityPots()
   const [approving, setApproving] = React.useState(false)
   const [executing, setExecuting] = React.useState(false)
@@ -61,6 +65,14 @@ export function PayoutCard({ payout, community, ngnPerUsd }: PayoutCardProps) {
   const isRoqquRail = payout.settlementRail.startsWith("ROQQU_")
 
   const handleApprove = async () => {
+    if (!isConnected || !address) {
+      if (openConnectModal) {
+        openConnectModal()
+      } else {
+        toast.error("Please connect your Base Sepolia wallet first.")
+      }
+      return
+    }
     setApproving(true)
     try {
       const txHash = await approvePayout(Number(payout.id))
@@ -77,6 +89,14 @@ export function PayoutCard({ payout, community, ngnPerUsd }: PayoutCardProps) {
   }
 
   const handleExecuteAndSettle = async () => {
+    if (!isConnected || !address) {
+      if (openConnectModal) {
+        openConnectModal()
+      } else {
+        toast.error("Please connect your Base Sepolia wallet first.")
+      }
+      return
+    }
     setExecuting(true)
     try {
       const txHash = await executePayout(Number(payout.id))

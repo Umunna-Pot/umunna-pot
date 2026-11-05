@@ -4,6 +4,7 @@ import * as React from "react"
 import { Loader2Icon, PlusIcon, Trash2Icon, UsersIcon } from "lucide-react"
 import { toast } from "sonner"
 import { useAccount } from "wagmi"
+import { useConnectModal } from "@rainbow-me/rainbowkit"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,7 +29,8 @@ const SAMPLE_SIGNERS = [
 ]
 
 export function CreateFundModal() {
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
+  const { openConnectModal } = useConnectModal()
   const { createCommunity, liveContract } = useCommunityPots()
   const invalidateDashboard = useInvalidateDashboard()
   const [open, setOpen] = React.useState(false)
@@ -72,6 +74,14 @@ export function CreateFundModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isConnected || !address) {
+      if (openConnectModal) {
+        openConnectModal()
+      } else {
+        toast.error("Please connect your Base Sepolia wallet first.")
+      }
+      return
+    }
     const cleanName = name.trim()
     if (cleanName.length < 3) {
       toast.error("Enter a community pot name (at least 3 characters).")
@@ -349,10 +359,20 @@ export function CreateFundModal() {
           </div>
 
           <DialogFooter className="mt-3 pt-3">
-            <Button type="submit" disabled={submitting} className="rounded-full">
-              {submitting && <Loader2Icon className="size-4 animate-spin" />}
-              Deploy Community Pot
-            </Button>
+            {!isConnected ? (
+              <Button
+                type="button"
+                onClick={openConnectModal}
+                className="rounded-full"
+              >
+                Connect Wallet to Deploy
+              </Button>
+            ) : (
+              <Button type="submit" disabled={submitting} className="rounded-full">
+                {submitting && <Loader2Icon className="size-4 animate-spin" />}
+                Deploy Community Pot
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { ArrowLeftRightIcon, Loader2Icon, SendIcon } from "lucide-react"
+import { ArrowLeftRightIcon, Loader2Icon, SendIcon, WalletIcon } from "lucide-react"
 import { toast } from "sonner"
 import { useAccount } from "wagmi"
+import { useConnectModal } from "@rainbow-me/rainbowkit"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,7 +34,8 @@ export function ProposePayoutModal({
   defaultCommunityId,
   ngnPerUsd,
 }: ProposePayoutModalProps) {
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
+  const { openConnectModal } = useConnectModal()
   const { communities, proposePayout } = useCommunityPots()
   const [open, setOpen] = React.useState(false)
   const [selectedPotId, setSelectedPotId] = React.useState<number>(
@@ -103,6 +105,14 @@ export function ProposePayoutModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isConnected || !address) {
+      if (openConnectModal) {
+        openConnectModal()
+      } else {
+        toast.error("Please connect your Base Sepolia wallet first.")
+      }
+      return
+    }
     const parsedRecipient = evmAddressSchema.safeParse(recipient.trim())
     if (!parsedRecipient.success) {
       toast.error("Enter a valid 0x recipient address.")
@@ -188,6 +198,25 @@ export function ProposePayoutModal({
             after M-of-N signers approve on-chain.
           </DialogDescription>
         </DialogHeader>
+
+        {!isConnected && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+            <div className="flex items-center gap-2">
+              <WalletIcon className="size-4 shrink-0" />
+              <span>Connect your wallet to sign this proposal on Base Sepolia.</span>
+            </div>
+            {openConnectModal && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={openConnectModal}
+                className="h-7 rounded-full text-xs shrink-0"
+              >
+                Connect
+              </Button>
+            )}
+          </div>
+        )}
 
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
           {defaultCommunityId === undefined && communities.length > 0 && (
@@ -300,18 +329,29 @@ export function ProposePayoutModal({
           </div>
 
           <DialogFooter>
-            <Button
-              type="submit"
-              disabled={submitting || isOverBalance || isZeroBalance || computedUsdc <= 0}
-              className="rounded-full"
-            >
-              {submitting && <Loader2Icon className="size-4 animate-spin" />}
-              {isOverBalance
-                ? "Exceeds Available Balance"
-                : isZeroBalance
-                  ? "Pot Has 0 Balance"
-                  : "Submit Proposal for Quorum"}
-            </Button>
+            {!isConnected ? (
+              <Button
+                type="button"
+                onClick={openConnectModal}
+                className="rounded-full gap-1.5"
+              >
+                <WalletIcon className="size-4" />
+                Connect Wallet to Propose
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={submitting || isOverBalance || isZeroBalance || computedUsdc <= 0}
+                className="rounded-full"
+              >
+                {submitting && <Loader2Icon className="size-4 animate-spin" />}
+                {isOverBalance
+                  ? "Exceeds Available Balance"
+                  : isZeroBalance
+                    ? "Pot Has 0 Balance"
+                    : "Submit Proposal for Quorum"}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

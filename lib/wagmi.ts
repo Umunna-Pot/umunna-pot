@@ -1,4 +1,4 @@
-import { cookieStorage, createConfig, createStorage, http } from "wagmi"
+import { createConfig, http } from "wagmi"
 import { baseSepolia } from "wagmi/chains"
 import { connectorsForWallets } from "@rainbow-me/rainbowkit"
 import {
@@ -44,9 +44,6 @@ export const wagmiConfig = createConfig({
   chains: [baseSepolia],
   connectors,
   ssr: true,
-  storage: createStorage({
-    storage: cookieStorage,
-  }),
   transports: {
     [baseSepolia.id]: http(rpcUrl),
   },
