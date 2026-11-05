@@ -30,7 +30,6 @@ export interface OpenRouterVerificationResult {
 
 const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 const DEFAULT_MODEL = "anthropic/claude-sonnet-5.5"
-const DEFAULT_TIMEOUT_MS = 60_000
 
 export function getOpenRouterConfig(): OpenRouterConfig {
   const apiKey = (process.env.OPENROUTER_API_KEY || "").trim()

@@ -1,10 +1,6 @@
 import mongoose from "mongoose"
 
-const MONGODB_URI = process.env.MONGODB_URI
-const MONGODB_DB = process.env.MONGODB_DB || "umunna_pot"
-
 declare global {
-  // eslint-disable-next-line no-var
   var mongooseConnection:
     | {
         conn: typeof import("mongoose") | null
@@ -17,7 +13,10 @@ const cached = global.mongooseConnection || { conn: null, promise: null }
 global.mongooseConnection = cached
 
 export async function dbConnect(): Promise<typeof import("mongoose") | null> {
-  if (!MONGODB_URI) {
+  const uri = process.env.MONGODB_URI?.trim()
+  const dbName = process.env.MONGODB_DB?.trim() || "umunna_pot"
+
+  if (!uri) {
     console.warn("[MongoDB] MONGODB_URI not defined, operating in detached mode")
     return null
   }
@@ -29,7 +28,7 @@ export async function dbConnect(): Promise<typeof import("mongoose") | null> {
   if (!cached.promise) {
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
-      dbName: MONGODB_DB,
+      dbName,
       maxPoolSize: 4,
       minPoolSize: 0,
       serverSelectionTimeoutMS: 5000,
@@ -37,9 +36,9 @@ export async function dbConnect(): Promise<typeof import("mongoose") | null> {
     }
 
     cached.promise = mongoose
-      .connect(MONGODB_URI, opts)
+      .connect(uri, opts)
       .then((m) => {
-        console.log("[MongoDB] Connected successfully to", MONGODB_DB)
+        console.log("[MongoDB] Connected successfully to", dbName)
         return m
       })
       .catch((err) => {
@@ -58,4 +57,3 @@ export async function dbConnect(): Promise<typeof import("mongoose") | null> {
     return null
   }
 }
-

@@ -1,5 +1,8 @@
 packages: []
 
+overrides:
+  qr: 0.5.5
+
 allowBuilds:
   sharp: true
   unrs-resolver: true

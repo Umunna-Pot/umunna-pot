@@ -5,6 +5,7 @@
  * 2. OpenRouter AI Integration
  * 3. Base Sepolia RPC & Bytecode Checks
  * 4. Roqqu API Services (RAS) Read-Only Rates & Balances
+ * 5. Database (MongoDB Atlas) Connectivity
  * 
  * Safe for local & CI execution. Never performs token transfers or deployments.
  */
@@ -21,6 +22,7 @@ import { validateEnvironment } from "@/lib/env"
 import { verifyOpenRouterConnectivity } from "@/lib/openrouter"
 import { verifyBlockchainConnectivity } from "@/lib/blockchain"
 import { verifyRoqquConnectivity } from "@/lib/roqquClient"
+import { dbConnect } from "@/lib/db"
 
 async function main() {
   console.log("==================================================")
@@ -111,9 +113,31 @@ async function main() {
   }
   console.log("")
 
+  // 5. Database (MongoDB Atlas) Verification
+  console.log("--- 5. Database (MongoDB Atlas) ---")
+  try {
+    const startTime = Date.now()
+    const conn = await dbConnect()
+    const latencyMs = Date.now() - startTime
+    if (conn && conn.connection.readyState === 1) {
+      console.log("Status: READY")
+      console.log(`Connected Database: ${conn.connection.name}`)
+      console.log(`Connection State: Connected (readyState: 1)`)
+      console.log(`Latency: ${latencyMs} ms`)
+    } else {
+      console.log("Status: CONFIGURED BUT NOT VERIFIED")
+      console.log("Details: Operating in detached / fallback mode")
+    }
+  } catch (dbErr) {
+    console.log("Status: BLOCKED")
+    console.log(`Diagnostic Detail: ${dbErr instanceof Error ? dbErr.message : "Connection failed"}`)
+  }
+  console.log("")
+
   console.log("==================================================")
   console.log("VERIFICATION COMPLETE")
   console.log("==================================================")
+  process.exit(0)
 }
 
 main().catch((err) => {

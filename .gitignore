@@ -43,3 +43,9 @@ next-env.d.ts
 contracts/out/
 contracts/cache/
 contracts/broadcast/
+
+# temporary test and browser profiles
+.edge-temp-profile/
+.chrome-temp-profile/
+.playwright/
+
