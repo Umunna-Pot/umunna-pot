@@ -16,7 +16,7 @@ export default function DripVaultPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
             Freelancer Drip Vault
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -24,20 +24,22 @@ export default function DripVaultPage() {
             guardian-protected emergency unlocks.
           </p>
         </div>
-        <Badge variant="secondary">Phase 3 Module Ready</Badge>
+        <Badge variant="secondary" className="font-mono text-xs">
+          Phase 3 Module Ready
+        </Badge>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+      <div className="grid gap-5 md:grid-cols-2">
+        <Card className="rounded-3xl">
           <CardHeader>
             <div className="flex items-center gap-2">
               <TimerIcon className="size-4 text-primary" />
-              <CardTitle>Scheduled Installments</CardTitle>
+              <CardTitle className="font-display">
+                Scheduled Installments
+              </CardTitle>
             </div>
             <CardDescription>
-              Backed by <code className="font-mono">createDripVault</code> &amp;{" "}
-              <code className="font-mono">releaseDue</code> (supports 60s demo
-              cadence).
+              Deterministic smart contract releases with automated timelocks (supports 60s demo cadence).
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
@@ -47,15 +49,16 @@ export default function DripVaultPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-3xl">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <ShieldAlertIcon className="size-4 text-primary" />
-              <CardTitle>Guardian Emergency Co-Sign</CardTitle>
+              <ShieldAlertIcon className="size-4 text-accent-warm" />
+              <CardTitle className="font-display">
+                Guardian Emergency Co-Sign
+              </CardTitle>
             </div>
             <CardDescription>
-              Backed by <code className="font-mono">requestEarlyExit</code>{" "}
-              &amp; <code className="font-mono">approveEarlyExit</code>.
+              Protected by designated accountability guardian co-sign for genuine emergencies.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
@@ -67,4 +70,3 @@ export default function DripVaultPage() {
     </div>
   )
 }
-

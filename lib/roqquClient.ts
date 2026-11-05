@@ -23,7 +23,6 @@ import type {
 
 const DEFAULT_BASE_URL = "https://service.roqqu.com/v1"
 const CACHE_TTL_MS = 60_000
-
 const TRACKED_TOKENS = [
   "usdt",
   "usdc",
@@ -82,19 +81,13 @@ function getRoqquConfig() {
   const mode: "staging" | "live" =
     process.env.ROQQU_MODE === "live" ? "live" : "staging"
   const authHeaderName = mode === "live" ? "x-api-key" : "x-staging-api-key"
-
   return { baseUrl, secretKey, mode, authHeaderName }
 }
 
 function buildAuthHeaders(extra?: Record<string, string>): Record<string, string> {
   const { secretKey, authHeaderName } = getRoqquConfig()
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    ...extra,
-  }
-  if (secretKey) {
-    headers[authHeaderName] = secretKey
-  }
+  const headers: Record<string, string> = { Accept: "application/json", ...extra }
+  if (secretKey) headers[authHeaderName] = secretKey
   return headers
 }
 
@@ -104,10 +97,7 @@ async function fetchJson(
 ): Promise<unknown> {
   const { baseUrl } = getRoqquConfig()
   const controller = new AbortController()
-  const timeout = setTimeout(
-    () => controller.abort(),
-    init?.timeoutMs ?? 8_000
-  )
+  const timeout = setTimeout(() => controller.abort(), init?.timeoutMs ?? 8_000)
 
   try {
     const response = await fetch(`${baseUrl}${path}`, {
@@ -133,27 +123,19 @@ async function fetchJson(
 }
 
 function computeTreasuryTotals(
-  rawBalances: Omit<
-    RoqquTreasuryBalances,
-    "totalEstimatedUsd" | "totalEstimatedNgn"
-  >,
+  raw: Omit<RoqquTreasuryBalances, "totalEstimatedUsd" | "totalEstimatedNgn">,
   prices: Record<string, RoqquTokenQuote>,
   ngnPerUsd: number
 ): RoqquTreasuryBalances {
   const totalEstimatedUsd =
-    rawBalances.usdt * (prices.usdt?.usdPrice ?? 1) +
-    rawBalances.btc * (prices.btc?.usdPrice ?? 0) +
-    rawBalances.eth * (prices.eth?.usdPrice ?? 0) +
-    rawBalances.trx * (prices.trx?.usdPrice ?? 0) +
-    rawBalances.sol * (prices.sol?.usdPrice ?? 0) +
-    rawBalances.bnb * (prices.bnb?.usdPrice ?? 0) +
-    rawBalances.xrp * (prices.xrp?.usdPrice ?? 0)
-
-  return {
-    ...rawBalances,
-    totalEstimatedUsd,
-    totalEstimatedNgn: totalEstimatedUsd * ngnPerUsd,
-  }
+    raw.usdt * (prices.usdt?.usdPrice ?? 1) +
+    raw.btc * (prices.btc?.usdPrice ?? 0) +
+    raw.eth * (prices.eth?.usdPrice ?? 0) +
+    raw.trx * (prices.trx?.usdPrice ?? 0) +
+    raw.sol * (prices.sol?.usdPrice ?? 0) +
+    raw.bnb * (prices.bnb?.usdPrice ?? 0) +
+    raw.xrp * (prices.xrp?.usdPrice ?? 0)
+  return { ...raw, totalEstimatedUsd, totalEstimatedNgn: totalEstimatedUsd * ngnPerUsd }
 }
 
 export async function getMarketRatesAndBalances(options?: {
@@ -165,21 +147,19 @@ export async function getMarketRatesAndBalances(options?: {
   }
 
   const { secretKey, mode } = getRoqquConfig()
-
-  const [ratesSettled, pricesSettled, balancesSettled] =
-    await Promise.allSettled([
-      fetchJson("/rates", { method: "GET" }),
-      fetchJson("/prices", { method: "GET" }),
-      secretKey
-        ? fetchJson("/balances", {
-            method: "POST",
-            headers: buildAuthHeaders({
-              "Content-Type": "application/x-www-form-urlencoded",
-            }),
-            body: new URLSearchParams().toString(),
-          })
-        : Promise.reject(new Error("ROQQU_SECRET_KEY not configured")),
-    ])
+  const [ratesSettled, pricesSettled, balancesSettled] = await Promise.allSettled([
+    fetchJson("/rates", { method: "GET" }),
+    fetchJson("/prices", { method: "GET" }),
+    secretKey
+      ? fetchJson("/balances", {
+          method: "POST",
+          headers: buildAuthHeaders({
+            "Content-Type": "application/x-www-form-urlencoded",
+          }),
+          body: new URLSearchParams().toString(),
+        })
+      : Promise.reject(new Error("ROQQU_SECRET_KEY not configured")),
+  ])
 
   let fiatRates: Record<string, RoqquFiatRate> = { ...FALLBACK_FIAT_RATES }
   let hasLivePublic = false
@@ -227,12 +207,12 @@ export async function getMarketRatesAndBalances(options?: {
 
   if (Object.keys(prices).length === 0) {
     for (const symbol of TRACKED_TOKENS) {
-      const fallback = FALLBACK_USD_PRICES[symbol] ?? { price: 0, change: 0 }
+      const fb = FALLBACK_USD_PRICES[symbol] ?? { price: 0, change: 0 }
       prices[symbol] = {
         symbol: symbol.toUpperCase(),
-        usdPrice: fallback.price,
-        ngnPrice: fallback.price * ngnPerUsd,
-        change24h: fallback.change,
+        usdPrice: fb.price,
+        ngnPrice: fb.price * ngnPerUsd,
+        change24h: fb.change,
       }
     }
   }
@@ -241,20 +221,10 @@ export async function getMarketRatesAndBalances(options?: {
   let baseBalances: Omit<
     RoqquTreasuryBalances,
     "totalEstimatedUsd" | "totalEstimatedNgn"
-  > = {
-    usdt: 10_000,
-    btc: 0,
-    eth: 0,
-    trx: 0,
-    sol: 0,
-    bnb: 0,
-    xrp: 0,
-  }
+  > = { usdt: 10_000, btc: 0, eth: 0, trx: 0, sol: 0, bnb: 0, xrp: 0 }
 
   if (balancesSettled.status === "fulfilled") {
-    const parsedBalances = rasBalancesResponseSchema.safeParse(
-      balancesSettled.value
-    )
+    const parsedBalances = rasBalancesResponseSchema.safeParse(balancesSettled.value)
     if (parsedBalances.success) {
       source = "ras-live"
       const b = parsedBalances.data.data.balance
@@ -282,39 +252,28 @@ export async function getMarketRatesAndBalances(options?: {
     updatedAt: new Date().toISOString(),
   }
 
-  cachedSnapshot = {
-    data: snapshot,
-    expiresAt: now + CACHE_TTL_MS,
-  }
-
+  cachedSnapshot = { data: snapshot, expiresAt: now + CACHE_TTL_MS }
   return snapshot
 }
 
-export async function getSupportedPaymentNetworks(): Promise<
-  RoqquSupportedNetwork[]
-> {
+export async function getSupportedPaymentNetworks(): Promise<RoqquSupportedNetwork[]> {
   const payload = (await fetchJson("/payment-links/supported-networks", {
     method: "GET",
     headers: buildAuthHeaders(),
   })) as { data?: RoqquSupportedNetwork[] }
-
   return Array.isArray(payload.data) ? payload.data : []
 }
 
 export function generateAlphanumericReference(prefix = "UP"): string {
   const cleanPrefix = prefix.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4)
   const randomSuffix = crypto.randomBytes(6).toString("hex").toUpperCase()
-  return `${cleanPrefix}${Date.now().toString(36).toUpperCase()}${randomSuffix}`.slice(
-    0,
-    20
-  )
+  return `${cleanPrefix}${Date.now().toString(36).toUpperCase()}${randomSuffix}`.slice(0, 20)
 }
 
 export async function createPaymentLink(
   input: CreatePaymentLinkInput
 ): Promise<RoqquPaymentLinkResult> {
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://umunna-pot.vercel.app"
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://umunna-pot.vercel.app"
   const paymentReference = generateAlphanumericReference(`UP${input.communityId}`)
   const [firstName, ...rest] = input.contributorName.trim().split(/\s+/)
   const lastName = rest.join(" ") || "Contributor"
@@ -339,9 +298,7 @@ export async function createPaymentLink(
 
   const payload = (await fetchJson("/payment-links", {
     method: "POST",
-    headers: buildAuthHeaders({
-      "Content-Type": "application/x-www-form-urlencoded",
-    }),
+    headers: buildAuthHeaders({ "Content-Type": "application/x-www-form-urlencoded" }),
     body: form.toString(),
   })) as { data?: Record<string, unknown> }
 
@@ -373,7 +330,6 @@ export async function generateCustomerWallet(
     headers: buildAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(input),
   })) as { data?: Record<string, unknown> }
-
   return payload.data ?? {}
 }
 
@@ -385,20 +341,12 @@ export async function sellTokenToUsdt(params: {
   if (token === "usdt") {
     throw new Error("Token is already USDT; no sell order required.")
   }
-
-  const form = new URLSearchParams({
-    amount: String(params.amount),
-    token,
-  })
-
+  const form = new URLSearchParams({ amount: String(params.amount), token })
   const payload = (await fetchJson("/trade/sell", {
     method: "POST",
-    headers: buildAuthHeaders({
-      "Content-Type": "application/x-www-form-urlencoded",
-    }),
+    headers: buildAuthHeaders({ "Content-Type": "application/x-www-form-urlencoded" }),
     body: form.toString(),
   })) as { data?: Record<string, unknown> }
-
   return payload.data ?? {}
 }
 
@@ -407,23 +355,13 @@ export async function buyTokenWithUsdt(params: {
   token: string
 }): Promise<Record<string, unknown>> {
   const token = params.token.toLowerCase()
-  if (token === "usdt") {
-    throw new Error("Cannot buy USDT with USDT.")
-  }
-
-  const form = new URLSearchParams({
-    amount: String(params.amount),
-    token,
-  })
-
+  if (token === "usdt") throw new Error("Cannot buy USDT with USDT.")
+  const form = new URLSearchParams({ amount: String(params.amount), token })
   const payload = (await fetchJson("/trade/buy", {
     method: "POST",
-    headers: buildAuthHeaders({
-      "Content-Type": "application/x-www-form-urlencoded",
-    }),
+    headers: buildAuthHeaders({ "Content-Type": "application/x-www-form-urlencoded" }),
     body: form.toString(),
   })) as { data?: Record<string, unknown> }
-
   return payload.data ?? {}
 }
 
@@ -439,21 +377,12 @@ export async function swapTokens(params: {
       "RAS forbids USDT in /trade/swap; use buyTokenWithUsdt or sellTokenToUsdt instead."
     )
   }
-
-  const form = new URLSearchParams({
-    amount: String(params.amount),
-    from,
-    to,
-  })
-
+  const form = new URLSearchParams({ amount: String(params.amount), from, to })
   const payload = (await fetchJson("/trade/swap", {
     method: "POST",
-    headers: buildAuthHeaders({
-      "Content-Type": "application/x-www-form-urlencoded",
-    }),
+    headers: buildAuthHeaders({ "Content-Type": "application/x-www-form-urlencoded" }),
     body: form.toString(),
   })) as { data?: Record<string, unknown> }
-
   return payload.data ?? {}
 }
 
@@ -469,15 +398,11 @@ export async function sendCoin(params: {
     to: params.to,
     token: params.token.toLowerCase(),
   })
-
   const payload = (await fetchJson("/wallets/send", {
     method: "POST",
-    headers: buildAuthHeaders({
-      "Content-Type": "application/x-www-form-urlencoded",
-    }),
+    headers: buildAuthHeaders({ "Content-Type": "application/x-www-form-urlencoded" }),
     body: form.toString(),
   })) as { data?: Record<string, unknown> }
-
   return payload.data ?? {}
 }
 
@@ -489,16 +414,13 @@ export function decryptWebhookPayload(params: {
   if (secretKey.length < 32) {
     throw new Error("ROQQU_SECRET_KEY must be at least 32 characters.")
   }
-
   const key = Buffer.from(secretKey.substring(0, 32), "utf8")
   const iv = Buffer.from(params.ivHexHeader, "hex")
   const encryptedBytes = Buffer.from(params.encryptedHashHex, "hex")
-
   const decipher = crypto.createDecipheriv("aes-256-ctr", key, iv)
   const decrypted = Buffer.concat([
     decipher.update(encryptedBytes),
     decipher.final(),
   ]).toString("utf8")
-
   return JSON.parse(decrypted) as Record<string, unknown>
 }
