@@ -115,20 +115,21 @@ export function Sidebar({
           {effectiveCollapsed ? (
             <Tooltip>
               <TooltipTrigger
-                delay={100}
+                delay={80}
                 render={
-                  <Link
-                    href="/"
-                    onClick={onNavigate}
-                    className="flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-xs transition-transform hover:scale-105"
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={toggleCollapsed}
+                    className="size-10 rounded-xl text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                    title="Expand sidebar"
                   >
-                    <CoinsIcon className="size-4" />
-                  </Link>
+                    <PanelLeftOpenIcon className="size-4 text-foreground" />
+                  </Button>
                 }
               />
               <TooltipContent side="right" sideOffset={12}>
-                <div className="font-semibold text-foreground">Umunna Pot</div>
-                <div className="text-[10px] text-muted-foreground">Programmable Money</div>
+                <span className="font-semibold text-foreground">Expand sidebar</span>
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -155,15 +156,25 @@ export function Sidebar({
                   RAS
                 </Badge>
                 {collapsible && (
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={toggleCollapsed}
-                    className="text-muted-foreground hover:text-foreground"
-                    title="Collapse sidebar"
-                  >
-                    <PanelLeftCloseIcon className="size-3.5" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      delay={100}
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={toggleCollapsed}
+                          className="rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                          title="Collapse sidebar"
+                        >
+                          <PanelLeftCloseIcon className="size-3.5" />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent side="right" sideOffset={8}>
+                      <span className="font-medium text-foreground">Collapse sidebar</span>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </>
@@ -253,79 +264,42 @@ export function Sidebar({
           })}
         </nav>
 
-        {/* Footer Navigation & Expand/Collapse Toggle */}
+        {/* Footer Navigation */}
         <div
           className={cn(
-            "space-y-2 border-t border-sidebar-border p-3",
-            effectiveCollapsed && "flex flex-col items-center p-2"
+            "border-t border-sidebar-border p-3",
+            effectiveCollapsed && "flex justify-center p-2"
           )}
         >
           {effectiveCollapsed ? (
-            <>
-              <Tooltip>
-                <TooltipTrigger
-                  delay={80}
-                  render={
-                    <Link
-                      href="/"
-                      onClick={onNavigate}
-                      className="flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    >
-                      <ArrowLeftIcon className="size-4" />
-                    </Link>
-                  }
-                />
-                <TooltipContent side="right" sideOffset={12}>
-                  <span className="font-medium text-foreground">
-                    Back to Landing Page
-                  </span>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger
-                  delay={80}
-                  render={
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={toggleCollapsed}
-                      className="size-10 rounded-xl text-muted-foreground hover:text-foreground"
-                    >
-                      <PanelLeftOpenIcon className="size-4" />
-                    </Button>
-                  }
-                />
-                <TooltipContent side="right" sideOffset={12}>
-                  <span className="font-medium text-foreground">
-                    Expand Sidebar
-                  </span>
-                </TooltipContent>
-              </Tooltip>
-            </>
+            <Tooltip>
+              <TooltipTrigger
+                delay={80}
+                render={
+                  <Link
+                    href="/"
+                    onClick={onNavigate}
+                    className="flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  >
+                    <ArrowLeftIcon className="size-4" />
+                  </Link>
+                }
+              />
+              <TooltipContent side="right" sideOffset={12}>
+                <span className="font-medium text-foreground">
+                  Back to Landing Page
+                </span>
+              </TooltipContent>
+            </Tooltip>
           ) : (
-            <>
-              <Link
-                href="/"
-                onClick={onNavigate}
-                className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              >
-                <ArrowLeftIcon className="size-3.5" />
-                Back to Landing Page
-              </Link>
-              {collapsible && (
-                <button
-                  type="button"
-                  onClick={toggleCollapsed}
-                  className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                >
-                  <span className="flex items-center gap-2">
-                    <PanelLeftCloseIcon className="size-3.5" />
-                    Collapse Sidebar
-                  </span>
-                </button>
-              )}
-            </>
+            <Link
+              href="/"
+              onClick={onNavigate}
+              className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            >
+              <ArrowLeftIcon className="size-3.5" />
+              Back to Landing Page
+            </Link>
           )}
         </div>
       </aside>
